@@ -604,7 +604,8 @@ BOOL CBonTuner::SendRequest(wchar_t *url)
 		}
 
 		hRequest = WinHttpOpenRequest(
-			hConnect, L"GET", url, NULL, WINHTTP_NO_REFERER, NULL, 0);
+			hConnect, L"GET", url, NULL, WINHTTP_NO_REFERER, NULL,
+			WINHTTP_FLAG_ESCAPE_DISABLE);
 		if (!hRequest) {
 			sprintf_s(szDebugOut, "%s: OpenRequest failed\n", g_TunerName);
 			::OutputDebugStringA(szDebugOut);
