@@ -49,8 +49,15 @@ static int Init(HMODULE hModule)
 	g_ServerPort = GetPrivateProfileInt(
 		L"GLOBAL", L"SERVER_PORT", 40772, g_IniFilePath);
 
-	g_DecodeB25 = GetPrivateProfileInt(
-		L"GLOBAL", L"DECODE_B25", 0, g_IniFilePath);
+	GetPrivateProfileStringW(
+		L"GLOBAL", L"STREAM_QUERY", L"", g_StreamQuery,
+		MAX_STREAM_QUERY_LEN, g_IniFilePath);
+	if (wcslen(g_StreamQuery) == 0) {
+		const int decode_b25 = GetPrivateProfileInt(
+			L"GLOBAL", L"DECODE_B25", 0, g_IniFilePath);
+		swprintf_s(g_StreamQuery, MAX_STREAM_QUERY_LEN,
+			L"decode=%d", decode_b25);
+	}
 	g_Priority = GetPrivateProfileInt(
 		L"GLOBAL", L"PRIORITY", 0, g_IniFilePath);
 	g_Service_Split = GetPrivateProfileInt(
@@ -414,18 +421,33 @@ const BOOL CBonTuner::SetChannel(const DWORD dwSpace, const DWORD dwChannel)
 		g_Channel_JSON.get(Bon_Channel).get<picojson::object>();
 
 	// Server request
-	const int len = 64;
+	const int len = 256;
 	wchar_t url[len];
+	const wchar_t *query = g_StreamQuery;
+	if (query[0] == L'?') {
+		query++;
+	}
 	if (g_Service_Split == 1) {
 		const int64_t id = (int64_t)channel_obj["id"].get<double>();
-		swprintf_s(url, len,
-			L"/api/services/%lld/stream?decode=%d", id, g_DecodeB25);
+		if (wcslen(query) > 0) {
+			swprintf_s(url, len,
+				L"/api/services/%lld/stream?%s", id, query);
+		}
+		else {
+			swprintf_s(url, len, L"/api/services/%lld/stream", id);
+		}
 	}
 	else {
 		const char *type = channel_obj["type"].get<std::string>().c_str();
 		const char *channel = channel_obj["channel"].get<std::string>().c_str();
-		swprintf_s(url, len,
-			L"/api/channels/%S/%S/stream?decode=%d", type, channel, g_DecodeB25);
+		if (wcslen(query) > 0) {
+			swprintf_s(url, len,
+				L"/api/channels/%S/%S/stream?%s", type, channel, query);
+		}
+		else {
+			swprintf_s(url, len,
+				L"/api/channels/%S/%S/stream", type, channel);
+		}
 	}
 	if (!SendRequest(url)) {
 		return TRUE;  // to complete channel setting
