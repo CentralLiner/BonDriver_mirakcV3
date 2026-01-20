@@ -23,7 +23,8 @@ static wchar_t g_IniFilePath[MAX_PATH] = { '\0' };
 #define MAX_HOST_LEN 256
 static wchar_t g_ServerHost[MAX_HOST_LEN];
 static uint32_t g_ServerPort;
-static int g_DecodeB25;
+static const int MAX_STREAM_QUERY_LEN = 256;
+static wchar_t g_StreamQuery[MAX_STREAM_QUERY_LEN];
 static int g_Priority;
 static int g_Service_Split;
 
